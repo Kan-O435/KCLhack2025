@@ -9,12 +9,14 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
 
-# Requires supporting ruby files with custom matchers and macros, etc, in
-# spec/support/ and its subdirectories.
-# Dir[Rails.root.join('spec', 'support', '**', '*.rb')].sort.each { |f| require f }
+# Active Storageのファイルアップロードに必要なモジュールを読み込み
+require 'action_dispatch/testing/test_process' 
+require 'fileutils' # FileUtilsの利用を保証
+
+# RSpecがロードされた後、最初に実行される場所で定数を定義
+TEST_FILE_PATH = Rails.root.join('spec', 'fixtures', 'files', 'test_image.jpg').freeze 
 
 # Checks for pending migrations and applies them before tests are run.
-# If you are not using ActiveRecord, you can remove these lines.
 begin
   ActiveRecord::Migration.maintain_test_schema!
 rescue ActiveRecord::PendingMigrationError => e
@@ -22,57 +24,48 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 
 RSpec.configure do |config|
-  # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')
   ]
 
-  # If you're not using ActiveRecord, or you'd prefer not to run each example in a transaction, remove the following line or assign false instead of true.
-  config.use_transactional_fixtures = true
+  # 組み込みトランザクション機能を無効化 (DatabaseCleanerに任せるため)
+  config.use_transactional_fixtures = false 
 
-  # RSpec Rails can automatically mix in different behaviours to your tests
-  # based on their file location, for example enabling you to call
-  # `get` and `post` directly in specs defined in spec/controllers.
-  # The following line is the one that has these automatic mixins:
   config.infer_spec_type_from_file_location!
-
-  # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
+  config.include FactoryBot::Syntax::Methods
+  
+  # ★★★ Active Storageとファイルアップロードに必要なヘルパー ★★★
+  config.include ActionDispatch::TestProcess::FixtureFile
+  #config.include ActiveStorage::SetBlob
 
-  # arbitrary gems may also be filtered via:
-  # config.filter_gems_from_backtrace("gem name")
-  
   # ==========================================================
-  # ★★★ DatabaseCleaner の設定はここに追加します ★★★
+  # ★★★ DatabaseCleaner の設定 (before/after suiteでファイル操作も実行) ★★★
   # ==========================================================
   
-  # テストスイートの開始時にデータベースをトランケーションでクリーンアップ
   config.before(:suite) do
+    # before(:suite)でTEST_FILE_PATHが定義済みであることを利用し、ファイルを生成
+    FileUtils.mkdir_p(File.dirname(TEST_FILE_PATH)) unless Dir.exist?(File.dirname(TEST_FILE_PATH))
+    unless File.exist?(TEST_FILE_PATH)
+      File.write(TEST_FILE_PATH, 'fake jpeg data', mode: 'wb')
+    end
     DatabaseCleaner.clean_with(:truncation)
   end
 
-  # 各テストの前に実行される設定
+  config.after(:suite) do
+    # テスト完了後にファイルを削除
+    File.delete(TEST_FILE_PATH) if File.exist?(TEST_FILE_PATH)
+  end
+
   config.before(:each) do
-    # 通常は高速なトランザクション戦略を使用
-    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.strategy = :truncation 
   end
 
-  # JavaScriptなど、トランザクションが使えないケース（例: feature specs）のための設定
-  config.before(:each, type: :feature) do
-    DatabaseCleaner.strategy = :truncation
-  end
-
-  # 各テストの開始時にデータベースをクリーンアップ
   config.before(:each) do
     DatabaseCleaner.start
   end
 
-  # 各テストの終了後にデータベースをクリーンアップ
   config.after(:each) do
     DatabaseCleaner.clean
   end
-  
-  # ==========================================================
-  # ★★★ DatabaseCleaner の設定はここまで ★★★
-  # ==========================================================
 end
