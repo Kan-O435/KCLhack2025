@@ -8,6 +8,8 @@ Rails.application.routes.draw do
         registrations: "api/v1/registrations"
       }
       resources :articles
+
+      resources :hair_models, only: [:create, :index]
     end
   end
 end
