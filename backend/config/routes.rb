@@ -9,7 +9,11 @@ Rails.application.routes.draw do
       }
       resources :articles
 
-      resources :hair_models, only: [:create, :index]
+      resources :hair_models, only: [:create, :index] do
+        collection do
+          get :calculate_growth
+        end
+      end
     end
   end
 end
