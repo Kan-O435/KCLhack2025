@@ -3,6 +3,10 @@
 class User < ActiveRecord::Base
   include DeviseTokenAuth::Concerns::User
 
+  def tokens
+    super || {}
+  end
+
   before_validation :generate_uid, on: :create
 
   def generate_uid
@@ -11,5 +15,4 @@ class User < ActiveRecord::Base
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
-
 end
