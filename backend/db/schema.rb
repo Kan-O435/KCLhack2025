@@ -41,7 +41,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_143412) do
 
   create_table "hair_models", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.string "model_data"
+    t.json "model_data"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_hair_models_on_user_id"
