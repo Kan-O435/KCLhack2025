@@ -14,6 +14,10 @@ Rails.application.routes.draw do
           get :calculate_growth
         end
       end
+
+      resource :user, only: [:update]
+
+      resources :appointments, only: [:index, :create]
     end
   end
 end
