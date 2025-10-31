@@ -1,16 +1,14 @@
-# frozen_string_literal: true
-
+# config/initializers/devise_token_auth.rb
 DeviseTokenAuth.setup do |config|
-
-  config.token_cost = Rails.env.test? ? 4 : 10
-
-  config.change_headers_on_each_request = false
-
+  # Use default header rotation so callbacks are correctly defined
+  config.change_headers_on_each_request = true
   config.token_lifespan = 2.weeks
-
-  config.headers_names = { 'access-token': "access-token",
-                            client: "client",
-                            expiry: "expiry",
-                            uid: "uid",
-                            'token-type': "token-type"}
+  # Exact symbol keys expected by devise_token_auth
+  config.headers_names = {
+    :'access-token' => 'access-token',
+    :client => 'client',
+    :expiry => 'expiry',
+    :uid => 'uid',
+    :'token-type' => 'token-type'
+  }
 end

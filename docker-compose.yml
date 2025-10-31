@@ -1,20 +1,6 @@
 version: "3.9"
 
 services:
-  api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "${RAILS_PORT}:3000"
-    env_file:
-      - .env
-    depends_on:
-      - db
-    volumes:
-      - ./backend:/app
-    command: bash -c "rm -f tmp/pids/server.pid && rails server -b 0.0.0.0"
-
   db:
     image: mysql:8.0
     container_name: hair_app_db
@@ -29,17 +15,33 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app:cached
+    depends_on:
+      - db
+    command: bash -c "rm -f tmp/pids/server.pid && rails server -b 0.0.0.0"
+
   web:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "${NEXT_PORT}:3000"
+      - "3001:3000"
     env_file:
       - .env
     volumes:
-      - ./frontend:/app
-    command: sh -c "npm install && npm run dev"
+      - ./frontend:/app:cached
+    depends_on:
+      - api
+    command: npm run dev
 
 volumes:
   db_data:

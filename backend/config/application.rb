@@ -1,6 +1,7 @@
 require_relative "boot"
 
 require "rails/all"
+require_relative "../lib/middleware/header_sanitizer"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -28,5 +29,8 @@ module App
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Sanitize response headers to avoid Rack 3 nil-key downcase errors
+    config.middleware.insert_after Rack::Head, HeaderSanitizer
   end
 end
