@@ -1,14 +1,21 @@
-# ベースイメージ
-FROM node:20-alpine
+# 1. ビルドステージ
+FROM node:20-slim AS builder
 
-# 作業ディレクトリの設定
+# ワーキングディレクトリを設定
 WORKDIR /app
 
-# ホストからpackage.jsonなどをコピー
-COPY package.json yarn.lock ./
+# package.jsonとロックファイルをコピー
+COPY package.json package-lock.json ./
 
-# 依存関係のインストール
-RUN yarn install
+# 依存関係をインストール
+# 🔥 ピア依存関係の競合を無視するためにフラグを追加 🔥
+RUN npm install --legacy-peer-deps
 
-# タイムゾーン設定
-ENV TZ Asia/Tokyo
+# アプリケーションコードをコピー
+COPY . .
+
+# Next.jsアプリケーションのビルド
+RUN npm run build
+
+# --------------------------
+# ... (Runner Stage は省略)
